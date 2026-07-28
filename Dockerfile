@@ -37,10 +37,26 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 # Copiar TODO el proyecto
 COPY . .
+RUN pwd
 
+RUN ls -la
+
+RUN test -f artisan && echo "ARTISAN EXISTE" || (echo "ARTISAN NO EXISTE" && exit 1)
+
+RUN cat artisan
 # Crear .env si no existe
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
+COPY . .
 
+RUN pwd
+RUN ls -la
+RUN test -f artisan && echo "ARTISAN EXISTE" || (echo "ARTISAN NO EXISTE" && exit 1)
+
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-interaction
 # Instalar dependencias PHP
 RUN composer install \
     --no-dev \
