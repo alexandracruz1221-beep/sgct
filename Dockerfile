@@ -2,44 +2,70 @@ FROM php:8.4-cli-bookworm
 
 WORKDIR /var/www/html
 
-ENV APP_ENV=production \
-    APP_DEBUG=false \
-    PORT=10000
+ENV APP_ENV=production
+ENV APP_DEBUG=false
+ENV PORT=10000
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        git \
-        unzip \
-        curl \
-        nodejs \
-        npm \
-        libicu-dev \
-        libonig-dev \
-        libzip-dev \
-        libpng-dev \
-        libjpeg62-turbo-dev \
-        libfreetype6-dev \
-        pkg-config \
-        zlib1g-dev \
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    curl \
+    nodejs \
+    npm \
+    libicu-dev \
+    libonig-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    pkg-config \
+    zlib1g-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd mbstring exif bcmath intl zip \
+    && docker-php-ext-install \
+        gd \
+        bcmath \
+        exif \
+        intl \
+        mbstring \
+        zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
+# Instalar Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
+# Copiar TODO el proyecto
 COPY . .
 
-RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+# Crear .env si no existe
+RUN if [ ! -f .env ]; then cp .env.example .env; fi
 
+# Instalar dependencias PHP
+RUN composer install \
+    --no-dev \
+    --prefer-dist \
+    --optimize-autoloader \
+    --no-interaction
+
+# Instalar dependencias Node
 RUN npm ci
 
-RUN npm run build \
-    && php artisan storage:link \
-    && php artisan config:cache \
-    && php artisan route:cache \
-    && chown -R www-data:www-data storage bootstrap/cache public
+# Compilar Vite
+RUN npm run build
+
+# Generar APP_KEY
+RUN php artisan key:generate --force
+
+# Optimizar Laravel
+RUN php artisan storage:link || true
+RUN php artisan config:clear
+RUN php artisan route:clear
+RUN php artisan view:clear
+RUN php artisan cache:clear
+RUN php artisan config:cache
+RUN php artisan route:cache
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan optimize && php artisan serve --host=0.0.0.0 --port=${PORT}"]
+CMD ["sh","-c","php artisan serve --host=0.0.0.0 --port=${PORT}"]
