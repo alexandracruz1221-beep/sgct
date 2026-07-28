@@ -32,31 +32,15 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Composer
+# Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar TODO el proyecto
+# Copiar todo el proyecto
 COPY . .
-RUN pwd
 
-RUN ls -la
-
-RUN test -f artisan && echo "ARTISAN EXISTE" || (echo "ARTISAN NO EXISTE" && exit 1)
-
-RUN cat artisan
 # Crear .env si no existe
 RUN if [ ! -f .env ]; then cp .env.example .env; fi
-COPY . .
 
-RUN pwd
-RUN ls -la
-RUN test -f artisan && echo "ARTISAN EXISTE" || (echo "ARTISAN NO EXISTE" && exit 1)
-
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --optimize-autoloader \
-    --no-interaction
 # Instalar dependencias PHP
 RUN composer install \
     --no-dev \
@@ -75,13 +59,10 @@ RUN php artisan key:generate --force
 
 # Optimizar Laravel
 RUN php artisan storage:link || true
-RUN php artisan config:clear
-RUN php artisan route:clear
-RUN php artisan view:clear
-RUN php artisan cache:clear
+RUN php artisan optimize:clear
 RUN php artisan config:cache
 RUN php artisan route:cache
 
 EXPOSE 10000
 
-CMD ["sh","-c","php artisan serve --host=0.0.0.0 --port=${PORT}"]
+CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=${PORT}"]
