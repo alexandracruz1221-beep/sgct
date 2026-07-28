@@ -28,13 +28,11 @@ RUN apt-get update \
 
 COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
 
-COPY composer.json composer.lock ./
+COPY . .
+
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
 
-COPY package.json package-lock.json ./
 RUN npm ci
-
-COPY . .
 
 RUN npm run build \
     && php artisan storage:link \
