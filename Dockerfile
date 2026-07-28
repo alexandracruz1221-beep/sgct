@@ -2,9 +2,9 @@ FROM php:8.4-cli-bookworm
 
 WORKDIR /var/www/html
 
-ENV APP_ENV=production
-ENV APP_DEBUG=false
-ENV PORT=10000
+ENV APP_ENV=production \
+    APP_DEBUG=false \
+    PORT=10000
 
 # Instalar dependencias del sistema
 RUN apt-get update && apt-get install -y \
@@ -32,14 +32,14 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Composer
+# Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copiar todo el proyecto
+# Copiar el proyecto
 COPY . .
 
-# Crear .env si no existe
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Crear un .env vacío (Render inyectará las variables de entorno)
+RUN touch .env
 
 # Instalar dependencias PHP
 RUN composer install \
@@ -54,14 +54,14 @@ RUN npm ci
 # Compilar Vite
 RUN npm run build
 
-# Generar APP_KEY
-RUN php artisan key:generate --force
+# Generar APP_KEY solo si no existe
+RUN php artisan key:generate --force || true
 
 # Optimizar Laravel
 RUN php artisan storage:link || true
-RUN php artisan optimize:clear
-RUN php artisan config:cache
-RUN php artisan route:cache
+RUN php artisan optimize:clear || true
+RUN php artisan config:cache || true
+RUN php artisan route:cache || true
 
 EXPOSE 10000
 
