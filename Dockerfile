@@ -19,10 +19,10 @@ RUN apt-get update \
         libpng-dev \
         libjpeg-dev \
         libfreetype6-dev \
-        libpq-dev \
+        
         zlib1g-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install pdo pdo_pgsql pdo_sqlite mbstring exif bcmath intl zip \
+    && docker-php-ext-install mbstring exif bcmath intl zip\
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
