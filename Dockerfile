@@ -17,12 +17,12 @@ RUN apt-get update \
         libonig-dev \
         libzip-dev \
         libpng-dev \
-        libjpeg-dev \
+        libjpeg62-turbo-dev \
         libfreetype6-dev \
-        
+        pkg-config \
         zlib1g-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install mbstring exif bcmath intl zip\
+    && docker-php-ext-install gd mbstring exif bcmath intl zip \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -44,4 +44,4 @@ RUN npm run build \
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan optimize && php artisan serve --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "php artisan optimize && php artisan serve --host=0.0.0.0 --port=${PORT}"]
